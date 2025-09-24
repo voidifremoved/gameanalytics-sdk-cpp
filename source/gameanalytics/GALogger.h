@@ -26,6 +26,11 @@ namespace gameanalytics
                     return;
                 }
 
+                if(logType == LogInfo && !getInstance().infoLogEnabled)
+                {
+                    return;
+                }
+
                 std::string tag = getInstance().tag;
                 tag += " :";
                     
