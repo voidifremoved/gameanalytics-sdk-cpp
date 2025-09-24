@@ -598,7 +598,7 @@ namespace gameanalytics
                     std::string cachedLastSessionTime = utilities::getOptionalValue<std::string>(state_dict, "last_session_time", "0");
                     std::string cachedTotalSessionTime = utilities::getOptionalValue<std::string>(state_dict, "total_session_time", "0");
                     
-                    _lastSessionTime = std::stoull(cachedTotalSessionTime);
+                    _lastSessionTime = std::stoull(cachedLastSessionTime);
                     _totalElapsedSessionTime = std::stoull(cachedTotalSessionTime);
                 }
                 catch(const std::exception& e)
