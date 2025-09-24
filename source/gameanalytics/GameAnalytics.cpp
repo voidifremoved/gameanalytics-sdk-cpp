@@ -998,4 +998,9 @@ namespace gameanalytics
         return state::GAState::getInstance().calculateSessionLength<std::chrono::seconds>();
     }
 
+    int64_t GameAnalytics::getElapsedTimeForPreviousSession()
+    {
+        return state::GAState::getInstance().getLastSessionLength();
+    }
+
 } // namespace gameanalytics

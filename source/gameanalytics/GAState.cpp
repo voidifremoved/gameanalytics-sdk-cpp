@@ -539,6 +539,11 @@ namespace gameanalytics
             return "";
         }
 
+        int64_t GAState::getLastSessionLength() const
+        {
+            return _lastSessionTime;
+        }
+
         int64_t GAState::getTotalSessionLength() const
         {
             return _totalElapsedSessionTime + calculateSessionLength<std::chrono::seconds>();
@@ -590,10 +595,11 @@ namespace gameanalytics
                 
                 try
                 {
-                    std::string cachedSessionTime = utilities::getOptionalValue<std::string>(state_dict, "total_session_time", "0");
+                    std::string cachedLastSessionTime = utilities::getOptionalValue<std::string>(state_dict, "last_session_time", "0");
+                    std::string cachedTotalSessionTime = utilities::getOptionalValue<std::string>(state_dict, "total_session_time", "0");
                     
-                    _totalElapsedSessionTime = std::stoull(cachedSessionTime);
-
+                    _lastSessionTime = std::stoull(cachedTotalSessionTime);
+                    _totalElapsedSessionTime = std::stoull(cachedTotalSessionTime);
                 }
                 catch(const std::exception& e)
                 {
@@ -1094,7 +1100,10 @@ namespace gameanalytics
 
         void GAState::updateTotalSessionTime()
         {
-            _totalElapsedSessionTime = getTotalSessionLength();
+            _lastSessionTime = calculateSessionLength();
+            _totalElapsedSessionTime += _lastSessionTime;
+            
+            _gaStore.setState("last_session_time",  std::to_string(_lastSessionTime));
             _gaStore.setState("total_session_time", std::to_string(_totalElapsedSessionTime));
         }
 

@@ -169,6 +169,8 @@ namespace gameanalytics
 
                 int64_t getTotalSessionLength() const;
 
+                int64_t getLastSessionLength() const;
+
                 void populateConfigurations(json& sdkConfig);
 
                 json getRemoteConfigAnnotations();
@@ -229,6 +231,7 @@ namespace gameanalytics
             int64_t _sessionNum = 0;
             int64_t _transactionNum = 0;
 
+            int64_t _lastSessionTime = 0;
             int64_t _totalElapsedSessionTime = 0;
             std::chrono::high_resolution_clock::time_point _startTimepoint;
 
