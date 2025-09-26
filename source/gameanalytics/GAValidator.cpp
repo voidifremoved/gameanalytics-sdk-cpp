@@ -275,6 +275,9 @@ namespace gameanalytics
 
         bool validateProgressionString(std::string const& progression, ValidationResult& out, int progressionLvl)
         {
+            if(progressionLvl > 0 && progression.empty())
+                return true;
+
             if (!GAValidator::validateEventPartLength(progression, true))
             {
                 logging::GALogger::w("Validation fail - progression event - - progression0%d: Cannot be empty or above 64 characters. String: %s", progressionLvl + 1, progression.c_str());
