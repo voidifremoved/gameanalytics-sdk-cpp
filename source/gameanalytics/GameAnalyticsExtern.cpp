@@ -2,12 +2,13 @@
 
 #include "GameAnalytics/GameAnalytics.h"
 #include "GAUtilities.h"
+#include "GameAnalyticsExtern.h"
 
-StringVector makeStringVector(const char** arr, int size)
+gameanalytics::StringVector makeStringVector(const char** arr, int size)
 {
     if(size > 0 && arr)
     {
-        StringVector v;
+        gameanalytics::StringVector v;
         v.reserve(size);
 
         for(int i = 0; i < size; ++i)
@@ -35,7 +36,7 @@ GAErrorCode copyStringBuffer(std::string const& s, char* out, int* size)
             return EGABufferError;
         }
 
-        *size = s.size();
+        *size = static_cast<int>(s.size());
         return EGANoError;
     }
 
@@ -44,31 +45,31 @@ GAErrorCode copyStringBuffer(std::string const& s, char* out, int* size)
 
 void gameAnalytics_configureAvailableCustomDimensions01(const char **customDimensions, int size)
 {
-    StringVector values = makeStringVector(customDimensions, size);
+    gameanalytics::StringVector values = makeStringVector(customDimensions, size);
     gameanalytics::GameAnalytics::configureAvailableCustomDimensions01(values);
 }
 
 void gameAnalytics_configureAvailableCustomDimensions02(const char **customDimensions, int size)
 {
-    StringVector values = makeStringVector(customDimensions, size);
+    gameanalytics::StringVector values = makeStringVector(customDimensions, size);
     gameanalytics::GameAnalytics::configureAvailableCustomDimensions02(values);
 }
 
 void gameAnalytics_configureAvailableCustomDimensions03(const char **customDimensions, int size)
 {
-    StringVector values = makeStringVector(customDimensions, size);
+    gameanalytics::StringVector values = makeStringVector(customDimensions, size);
     gameanalytics::GameAnalytics::configureAvailableCustomDimensions03(values);
 }
 
 void gameAnalytics_configureAvailableResourceCurrencies(const char** currencies, int size)
 {
-    StringVector values = makeStringVector(currencies, size);
+    gameanalytics::StringVector values = makeStringVector(currencies, size);
     gameanalytics::GameAnalytics::configureAvailableResourceCurrencies(values);
 }
 
 void gameAnalytics_configureAvailableResourceItemTypes(const char** resources, int size)
 {
-    StringVector values = makeStringVector(resources, size);
+    gameanalytics::StringVector values = makeStringVector(resources, size);
     gameanalytics::GameAnalytics::configureAvailableResourceItemTypes(values);
 }
 
@@ -138,9 +139,9 @@ void gameAnalytics_addProgressionEvent(int progressionStatus, const char *progre
     gameanalytics::GameAnalytics::addProgressionEvent((gameanalytics::EGAProgressionStatus)progressionStatus, progression01, progression02, progression03, fields, mergeFields);
 }
 
-void gameAnalytics_addProgressionEventWithScore(int progressionStatus, const char *progression01, const char *progression02, const char *progression03, double score, const char *fields, GAStatus mergeFields)
+void gameAnalytics_addProgressionEventWithScore(int progressionStatus, const char *progression01, const char *progression02, const char *progression03, int score, const char *fields, GAStatus mergeFields)
 {
-    gameanalytics::GameAnalytics::addProgressionEvent((gameanalytics::EGAProgressionStatus)progressionStatus, progression01, progression02, progression03, (int)score, fields, mergeFields);
+    gameanalytics::GameAnalytics::addProgressionEvent((gameanalytics::EGAProgressionStatus)progressionStatus, score, progression01, progression02, progression03, fields, mergeFields);
 }
 
 void gameAnalytics_addDesignEvent(const char *eventId, const char *fields, GAStatus mergeFields)
@@ -233,7 +234,7 @@ void gameAnalytics_onQuit()
     gameanalytics::GameAnalytics::onQuit();
 }
 
-void gameAnalytics_getRemoteConfigsValueAsString(const char *key, char* out, int* size)
+GAErrorCode gameAnalytics_getRemoteConfigsValueAsString(const char *key, char* out, int* size)
 {
     std::string returnValue = gameanalytics::GameAnalytics::getRemoteConfigsValueAsString(key);
     return copyStringBuffer(returnValue, out, size);
@@ -247,7 +248,7 @@ GAErrorCode gameAnalytics_getRemoteConfigsValueAsStringWithDefaultValue(const ch
 
 GAStatus gameAnalytics_isRemoteConfigsReady()
 {
-    return gameanalytics::GameAnalytics::isRemoteConfigsReady() ? GAEnabled : GADisabled;
+    return gameanalytics::GameAnalytics::isRemoteConfigsReady() ? EGAEnabled : EGADisabled;
 }
 
 GAErrorCode gameAnalytics_getRemoteConfigsContentAsString(char* out, int* size)
@@ -256,9 +257,9 @@ GAErrorCode gameAnalytics_getRemoteConfigsContentAsString(char* out, int* size)
     return copyStringBuffer(returnValue, out, size);
 }
 
-GAErrorCode gameAnalytics_getRemoteConfigsValueAsJson(char* out, int* size)
+GAErrorCode gameAnalytics_getRemoteConfigsValueAsJson(const char* key, char* out, int* size)
 {
-    std::string returnValue = gameanalytics::GameAnalytics::getRemoteConfigsContentAsJson();
+    std::string returnValue = gameanalytics::GameAnalytics::getRemoteConfigsValueAsJson(key);
     return copyStringBuffer(returnValue, out, size);
 }
 
@@ -289,9 +290,9 @@ long long gameAnalytics_getElapsedTimeForPreviousSession()
     return gameanalytics::GameAnalytics::getElapsedTimeForPreviousSession();
 }
 
-void gameAnalytics_enableSDKInit(GAStatus status)
+void gameAnalytics_enableSDKInitEvent(GAStatus status)
 {
-    return gameanalytics::GameAnalytics::enableSDKInit(status);
+    return gameanalytics::GameAnalytics::enableSDKInitEvent(status);
 }
 
 void gameAnalytics_enableMemoryHistogram(GAStatus status)
@@ -301,7 +302,7 @@ void gameAnalytics_enableMemoryHistogram(GAStatus status)
 
 void gameAnalytics_enableFPSHistogram(GAFpsTracker tracker, GAStatus status)
 {
-    gameanaltics::FpsTracker fpsTracker = 
+    gameanalytics::FPSTracker fpsTracker =
     [=]() -> float
     {
         return tracker();

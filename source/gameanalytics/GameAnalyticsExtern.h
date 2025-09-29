@@ -60,7 +60,7 @@ GA_EXPORT void gameAnalytics_initialize(const char *gameKey, const char *gameSec
 GA_EXPORT void gameAnalytics_addBusinessEvent(const char *currency, double amount, const char *itemType, const char *itemId, const char *cartType, const char *customFields, GAStatus mergeFields);
 GA_EXPORT void gameAnalytics_addResourceEvent(int flowType, const char *currency, double amount, const char *itemType, const char *itemId, const char *customFields, GAStatus mergeFields);
 GA_EXPORT void gameAnalytics_addProgressionEvent(int progressionStatus, const char *progression01, const char *progression02, const char *progression03, const char *customFields, GAStatus mergeFields);
-GA_EXPORT void gameAnalytics_addProgressionEventWithScore(int progressionStatus, const char *progression01, const char *progression02, const char *progression03, double score, const char *customFields, GAStatus mergeFields);
+GA_EXPORT void gameAnalytics_addProgressionEventWithScore(int progressionStatus, const char *progression01, const char *progression02, const char *progression03, int score, const char *customFields, GAStatus mergeFields);
 GA_EXPORT void gameAnalytics_addDesignEvent(const char *eventId, const char *customFields, GAStatus mergeFields);
 GA_EXPORT void gameAnalytics_addDesignEventWithValue(const char *eventId, double value, const char *customFields, GAStatus mergeFields);
 GA_EXPORT void gameAnalytics_addErrorEvent(int severity, const char *message, const char *customFields, GAStatus mergeFields);
@@ -87,11 +87,12 @@ GA_EXPORT void gameAnalytics_onResume();
 GA_EXPORT void gameAnalytics_onSuspend();
 GA_EXPORT void gameAnalytics_onQuit();
 
-GA_EXPORT GAErrorCode gameAnalytics_getRemoteConfigsValueAsString(const char *key, char* out, int* bufferSize);
+GA_EXPORT GAErrorCode gameAnalytics_getRemoteConfigsValueAsString(const char *key, char* out, int* size);
 GA_EXPORT GAErrorCode gameAnalytics_getRemoteConfigsValueAsStringWithDefaultValue(const char *key, const char *defaultValue, char* out, int* bufferSize);
+GA_EXPORT GAErrorCode gameAnalytics_getRemoteConfigsValueAsJson(const char* key, char* out, int* size);
+
 GA_EXPORT GAStatus    gameAnalytics_isRemoteConfigsReady();
 GA_EXPORT GAErrorCode gameAnalytics_getRemoteConfigsContentAsString(char* out, int* size);
-GA_EXPORT GAErrorCode gameAnalytics_getRemoteConfigsValueAsJson(char* out, int* size);
 
 GA_EXPORT GAErrorCode gameAnalytics_getABTestingId(char* out, int* size);
 GA_EXPORT GAErrorCode gameAnalytics_getABTestingVariantId(char* out, int* size);
@@ -100,7 +101,7 @@ GA_EXPORT long long gameAnalytics_getElapsedSessionTime();
 GA_EXPORT long long gameAnalytics_getElapsedTimeFromAllSessions();
 GA_EXPORT long long gameAnalytics_getElapsedTimeForPreviousSession();
 
-GA_EXPORT void gameAnalytics_enableSDKInit(GAStatus status);
+GA_EXPORT void gameAnalytics_enableSDKInitEvent(GAStatus status);
 GA_EXPORT void gameAnalytics_enableMemoryHistogram(GAStatus status);
 GA_EXPORT void gameAnalytics_enableFPSHistogram(GAFpsTracker tracker, GAStatus status);
 GA_EXPORT void gameAnalytics_enableHardwareTracking(GAStatus status);
