@@ -206,30 +206,6 @@ namespace gameanalytics
         {
             return sqlDatabase;
         }
-
-        bool GAStore::fixOldDatabase()
-        {
-            std::filesystem::path oldPath  = dbPath;
-            std::filesystem::path filename = oldPath.filename();
-            
-            oldPath = oldPath.parent_path() / ".." / filename;
-            
-            if(std::filesystem::exists(oldPath) && !std::filesystem::exists(dbPath))
-            {
-                try
-                {
-                    std::filesystem::rename(oldPath, dbPath);
-                }
-                catch(...)
-                {
-                    return false;
-                }
-                
-                return true;
-            }
-
-            return false;
-        }
     
         bool GAStore::initDatabaseLocation()
         {
@@ -244,8 +220,6 @@ namespace gameanalytics
             {
                 if(!std::filesystem::create_directory(p))
                     return false;
-                
-                fixOldDatabase();
             }
             
             return true;
