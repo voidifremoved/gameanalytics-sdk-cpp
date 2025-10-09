@@ -1,5 +1,16 @@
 # Changelog
 
+# 5.1.0
+
+### Added
+
+- **Previous session time**: functionality to get the last session time
+
+### Fixed
+
+- **Playtime Metrics**: Fixed annotations for session time and total session time
+- **MacOS**: GPU model detection
+
 ## 5.0.0
 
 ### Added
