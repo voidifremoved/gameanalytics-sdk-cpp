@@ -521,7 +521,7 @@ namespace gameanalytics
 
                 if (!state.updateLevelContext(status, id, name))
                 {
-                    logging::GALogger::e("Failed to update the level context with status:", levelStatusString(status));
+                    logging::GALogger::e("Failed to update the level context with status:", levelStatusString(status).c_str());
                     return;
                 }
             }
