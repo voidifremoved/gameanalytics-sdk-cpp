@@ -482,11 +482,7 @@ namespace gameanalytics
                     return;
                 }
 
-                if(!state::GAState::getInstance().updateLevelContext(status, id, name))
-                {
-                    logging::GALogger::e("Invalid level");
-                    return;
-                }
+                state::GAState& state = state::GAState::getInstance();
 
                 // Validate
                 validators::ValidationResult validationResult = validators::GAValidator::validateLevelEvent(status, id, name);
@@ -499,11 +495,17 @@ namespace gameanalytics
 
                 // Create empty eventData
                 json eventData;
+
                 eventData["category"]   = GAEvents::CategoryLevel;
                 eventData["status"]     = levelStatusString(status);
-                eventData["level_id"]   = id;
-                eventData["level_name"] = name;
                 eventData["value"]      = value;
+
+                if (status == EGALevelStatus::Start)
+                {
+                    eventData["level_id"]   = id;
+                    eventData["level_name"] = name;
+                    eventData["level_time"] = 0;
+                }
 
                 json cleanedFields = state::GAState::getValidatedCustomFields(fields);
                 getInstance().addCustomFieldsToEvent(eventData, cleanedFields);
@@ -516,6 +518,12 @@ namespace gameanalytics
 
                 // Send to store
                 getInstance().addEventToStore(eventData);
+
+                if (!state.updateLevelContext(status, id, name))
+                {
+                    logging::GALogger::e("Failed to update the level context with status:", levelStatusString(status));
+                    return;
+                }
             }
             catch(std::exception& e)
             {
@@ -920,6 +928,23 @@ namespace gameanalytics
                     return "Source";
                 case Sink:
                     return "Sink";
+                default:
+                    return "";
+            }
+        }
+
+        std::string GAEvents::levelStatusString(EGALevelStatus lvlStatus)
+        {
+            switch (lvlStatus)
+            {
+                case EGALevelStatus::Start:
+                    return "start";
+                case EGALevelStatus::Abort:
+                    return "abort";
+                case EGALevelStatus::Complete:
+                    return "complete";
+                case EGALevelStatus::Failure:
+                    return "failure";
                 default:
                     return "";
             }

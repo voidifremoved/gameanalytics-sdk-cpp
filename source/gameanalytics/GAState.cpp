@@ -27,15 +27,20 @@ namespace gameanalytics
 
     namespace state
     {
-        bool GAState::LevelContext::StartLevel(int32_t id, std::string const& name)
+        bool GAState::LevelContext::startLevel(int32_t id, std::string const& name)
         {
-            if(!IsInLevel() && id > 0)
+            if(!isInLevel() && id > INVALID_LVL)
             {
+                logging::GALogger::d("Starting level %d with name %s", id, name.c_str());
+
                 levelId = id;
                 levelName = name;
 
                 timer.reset();
                 timer.start();
+
+                cachedTime = 0;
+                wasContextResumed = false;
 
                 return true;
             }
@@ -43,17 +48,67 @@ namespace gameanalytics
             return false;
         }
 
-        bool GAState::LevelContext::EndLevel()
+        bool GAState::LevelContext::endLevel()
         {
-            if(IsInLevel())
+            if(isInLevel())
             {
+                logging::GALogger::d("Ending level %d with name %s, total duration of %I64d seconds", levelId, levelName.c_str(), getLevelTime());
+
                 levelId = INVALID_LVL;
                 levelName = "";
+                cachedTime = 0;
+                wasContextResumed = false;
 
                 return true;
             }
 
             return false;
+        }
+
+        bool GAState::LevelContext::resumeLevel(int32_t id, std::string const& name, int64_t timeElapsed)
+        {
+            if (startLevel(id, name))
+            {
+                logging::GALogger::d("Resumed cached level %d with name %s, total duration of %I64d seconds", levelId, levelName.c_str(), timeElapsed);
+
+                cachedTime = timeElapsed;
+                wasContextResumed = true;
+
+                return true;
+            }
+
+            return false;
+        }
+
+        bool GAState::LevelContext::resumeLevel()
+        {
+            if (isInLevel())
+            {
+                logging::GALogger::d("Resuming level %d with name %s, total duration of %I64d seconds", levelId, levelName.c_str(), getLevelTime());
+
+                timer.start();
+                return true;
+            }
+
+            return false;
+        }
+
+        bool GAState::LevelContext::pauseLevel()
+        {
+            if (isInLevel())
+            {
+                logging::GALogger::d("Paused level %d with name %s, total duration of %I64d seconds", levelId, levelName.c_str(), getLevelTime());
+
+                timer.stop();
+                return true;
+            }
+
+            return false;
+        }
+
+        int64_t GAState::LevelContext::getLevelTime() const
+        {
+            return timer.getSeconds() + cachedTime;
         }
 
         GAState& GAState::getInstance()
@@ -416,6 +471,11 @@ namespace gameanalytics
                     events::GAEvents::addHealthEvent();
                     events::GAEvents::addSessionEndEvent();
                     getInstance()._sessionStart = 0;
+
+                    if (getInstance()._levelContext.isInLevel())
+                    {
+                        getInstance().cacheLevelContext();
+                    }
                 }
                 events::GAEvents::stopEventQueue();
             }
@@ -458,10 +518,11 @@ namespace gameanalytics
                 // ---- OPTIONAL ---- //
 
                 // level
-                if(getInstance()._levelContext.IsInLevel())
+                if(getInstance()._levelContext.isInLevel())
                 {
                     out["level_name"] = getInstance()._levelContext.levelName;
                     out["level_id"]   = getInstance()._levelContext.levelId;
+                    out["level_time"] = getInstance()._levelContext.getLevelTime();
                 }
 
                 // A/B testing
@@ -668,6 +729,12 @@ namespace gameanalytics
                         }
                     }
                 }
+
+                if (checkCachedLevelContext(state_dict))
+                {
+                    logging::GALogger::d("Found active level attempt.");
+                    restoreLevelContext(state_dict);
+                }
             }
             catch (json::exception& e)
             {
@@ -835,7 +902,7 @@ namespace gameanalytics
                 // Set session start
                 _sessionStart = getClientTsAdjusted();
 
-                // to acurrately measure time
+                // to accurately measure time
                 _startTimepoint = std::chrono::high_resolution_clock::now();
 
                 // Add session start event
@@ -896,6 +963,11 @@ namespace gameanalytics
         int64_t GAState::calculateSessionLength() const
         {
             return std::chrono::duration_cast<std::chrono::seconds>(std::chrono::high_resolution_clock::now() - _startTimepoint).count();
+        }
+
+        bool GAState::isLevelTracked() const
+        {
+            return _levelContext.isInLevel();
         }
 
         void GAState::addRemoteConfigsListener(const std::shared_ptr<IRemoteConfigsListener>& listener)
@@ -1176,27 +1248,85 @@ namespace gameanalytics
             {
                 case EGALevelStatus::Start:
                 {
-                    if(_levelContext.IsInLevel())
+                    if(_levelContext.isInLevel())
                     {
-                        
+                        logging::GALogger::w("A level is already active. Please call a level abort/failure/complete first!");
+                        return false;
                     }
 
-                    return _levelContext.StartLevel(id, levelName);
+                    return _levelContext.startLevel(id, levelName);
                 }
 
                 case EGALevelStatus::Failure:
                 case EGALevelStatus::Complete:
                 case EGALevelStatus::Abort:
                 {
-                    if(!_levelContext.IsInLevel())
+                    if(!_levelContext.isInLevel())
                     {
                         logging::GALogger::w("No active level found. A level start event must be called before Failure/Complete/Abort events!");
                         return false;
                     }
 
-                    return _levelContext.EndLevel();
+                    if (_levelContext.endLevel())
+                    {
+                        resetCachedLevelContext();
+                        return true;
+                    }
                 }
             }
+        }
+
+        bool GAState::cacheLevelContext()
+        {
+            if (_levelContext.isInLevel())
+            {
+                logging::GALogger::d("Level is active. Caching level context.");
+
+                _gaStore.setState("level_id", std::to_string(_levelContext.levelId));
+                _gaStore.setState("level_name", _levelContext.levelName);
+                _gaStore.setState("level_time", std::to_string(_levelContext.getLevelTime()));
+
+                return true;
+            }
+
+            return false;
+        }
+
+        void GAState::resetCachedLevelContext()
+        {
+            // clear level context state
+            _gaStore.setState("level_id", "-1");
+            _gaStore.setState("level_name", "");
+            _gaStore.setState("level_time", "0");
+        }
+
+        bool GAState::restoreLevelContext(json& stateDict)
+        {
+            if (!_levelContext.isInLevel())
+            {
+                int32_t     levelId   = utilities::getNumberFromCache(stateDict, "level_id", LevelContext::INVALID_LVL);
+                int64_t     levelTime = utilities::getNumberFromCache(stateDict, "level_time", 0);
+                std::string levelName = utilities::getOptionalValue<std::string>(stateDict, "level_name", "");
+
+                if (levelId > LevelContext::INVALID_LVL)
+                {
+                    logging::GALogger::d("Restoring level context from local cache.");
+
+                    _levelContext.resumeLevel(levelId, levelName, levelTime);
+
+                    resetCachedLevelContext();
+
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        bool GAState::checkCachedLevelContext(json& stateDict)
+        {
+            int32_t levelId = utilities::getNumberFromCache(stateDict, "level_id", LevelContext::INVALID_LVL);
+            return levelId > LevelContext::INVALID_LVL;
         }
     }
 }

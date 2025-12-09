@@ -148,6 +148,7 @@ namespace gameanalytics
                 static json getValidatedCustomFields(const json& withEventFields);
 
                 int64_t calculateSessionLength() const;
+                bool isLevelTracked() const;
 
         private:
 
@@ -157,12 +158,23 @@ namespace gameanalytics
 
                 int32_t              levelId{INVALID_LVL};
                 std::string          levelName;
+
+                inline bool isInLevel() const { return levelId != INVALID_LVL; }
+
+                bool startLevel(int32_t id, std::string const& name);
+                bool endLevel();
+
+                bool resumeLevel(int32_t id, std::string const& name, int64_t timeElapsed = 0);
+                bool resumeLevel();
+                bool pauseLevel();
+
+                int64_t getLevelTime() const;
+
+                private:
+
                 utilities::Stopwatch timer;
-
-                inline bool IsInLevel() const { return levelId != INVALID_LVL; }
-
-                bool StartLevel(int32_t id, std::string const& name);
-                bool EndLevel();
+                int64_t cachedTime = 0;
+                bool wasContextResumed = false;
             };
             
             GAState();
@@ -200,6 +212,11 @@ namespace gameanalytics
             void addErrorEvent(EGAErrorSeverity severity, std::string const& message);
 
             bool updateLevelContext(EGALevelStatus status, int levelId, std::string const& levelName);
+
+            bool cacheLevelContext();
+            bool restoreLevelContext(json& stateDict);
+            bool checkCachedLevelContext(json& stateDict);
+            void resetCachedLevelContext();
 
             threading::GAThreading  _gaThread;
             events::GAEvents        _gaEvents;

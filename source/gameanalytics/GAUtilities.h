@@ -11,6 +11,7 @@
 #include <locale>
 #include <codecvt>
 #include <exception>
+#include <chrono>
 
 namespace gameanalytics
 {
@@ -18,17 +19,22 @@ namespace gameanalytics
     {
         class Stopwatch
         {
-            std::chrono::time_point _start{};
-            std::chrono::time_point _end{};
-            std::chrono::seconds    _duration{};
+            private:
 
-            bool _isRunning{false};
+                typedef std::chrono::steady_clock::time_point timestamp;
+
+                timestamp _start{};
+                timestamp _end{};
+
+                std::chrono::seconds _duration{};
+
+                bool _isRunning{false};
             
             public:
 
                 Stopwatch() = default;
 
-                uint64_t getSeconds();
+                uint64_t getSeconds() const;
 
                 bool start();
                 bool stop();

@@ -598,6 +598,31 @@ namespace gameanalytics
         });
     }
 
+    void GameAnalytics::addLevelStartEvent(int levelId, std::string const& levelName, int value, std::string const& customFields)
+    {
+        return addLevelEvent(EGALevelStatus::Start, levelId, levelName, value, customFields);
+    }
+
+    void GameAnalytics::addLevelAbortEvent(int value, std::string const& customFields)
+    {
+        return addLevelEvent(EGALevelStatus::Abort, -1, "", value, customFields);
+    }
+
+    void GameAnalytics::addLevelFailureEvent(int value, std::string const& customFields)
+    {
+        return addLevelEvent(EGALevelStatus::Failure, -1, "", value, customFields);
+    }
+
+    void GameAnalytics::addLevelCompleteEvent(int value, std::string const& customFields)
+    {
+        return addLevelEvent(EGALevelStatus::Complete, -1, "", value, customFields);
+    }
+
+    bool GameAnalytics::isLevelCurrentlyTracked()
+    {
+        return state::GAState::getInstance().isLevelTracked();
+    }
+
     // ------------- SET STATE CHANGES WHILE RUNNING ----------------- //
 
     void GameAnalytics::setEnabledInfoLog(bool flag)

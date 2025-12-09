@@ -26,7 +26,7 @@ namespace gameanalytics
                     return;
                 }
 
-                std::string tag = getInstance().tag;
+                std::string tag = getInstance().TAG;
                 tag += " :";
                     
                 switch (logType)

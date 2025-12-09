@@ -142,18 +142,22 @@ namespace gameanalytics
                 return out;
             }
 
-            if(id < 0)
+            if (status == EGALevelStatus::Start)
             {
-                logging::GALogger::w("Validation fail - level event - id value cannot be negative");
-                return out;
+                if (id < 0)
+                {
+                    logging::GALogger::w("Validation fail - level event - id value cannot be negative");
+                    return out;
+                }
+
+                if (name.empty())
+                {
+                    logging::GALogger::w("Validation fail - level event - level name cannot be empty");
+                    return out;
+                }
             }
 
-            if(name.empty())
-            {
-                logging::GALogger::w("Validation fail - level event - level name cannot be empty");
-                return out;
-            }
-
+            out.result = true;
             return out;
         }
 
@@ -363,11 +367,11 @@ namespace gameanalytics
                 return;
             }
 
-			bool isProgression01Valid = validateProgressionString(progression01, out, 0);
-			bool isProgression02Valid = validateProgressionString(progression02, out, 1);
-			bool isProgression03Valid = validateProgressionString(progression03, out, 2);
-			
-			out.result = isProgression01Valid || (isProgression01Valid && isProgression02Valid) || (isProgression01Valid && isProgression02Valid && isProgression03Valid);
+            bool isProgression01Valid = validateProgressionString(progression01, out, 0);
+            bool isProgression02Valid = validateProgressionString(progression02, out, 1);
+            bool isProgression03Valid = validateProgressionString(progression03, out, 2);
+            
+            out.result = isProgression01Valid || (isProgression01Valid && isProgression02Valid) || (isProgression01Valid && isProgression02Valid && isProgression03Valid);
 
         }
 
@@ -731,8 +735,8 @@ namespace gameanalytics
             {
                 if(str.empty())
                 {
-					logging::GALogger::w("[%s] Failed array validation, empty value inside the array", logTag.c_str());
-					return false;
+                    logging::GALogger::w("[%s] Failed array validation, empty value inside the array", logTag.c_str());
+                    return false;
                 }
 
                 if(str.length() > maxStringLength)

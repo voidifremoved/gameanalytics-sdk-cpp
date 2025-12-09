@@ -26,14 +26,19 @@ namespace gameanalytics
 {
     namespace utilities
     {
-        Stopwatch::Stopwatch()
+        uint64_t Stopwatch::getSeconds() const
         {
-            reset();
-        }
+            if (isRunning())
+            {
+                auto now = std::chrono::steady_clock::now();
+                auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(now - _start);
 
-        uint64_t Stopwatch::getSeconds()
-        {
-            return _duration.count();
+                return _duration.count() + elapsed.count();
+            }
+            else
+            {
+                return _duration.count();
+            }
         }
 
         bool Stopwatch::start()
@@ -48,7 +53,7 @@ namespace gameanalytics
             return false;
         }
 
-        void Stopwatch::stop()
+        bool Stopwatch::stop()
         {
             if(_isRunning)
             {
