@@ -77,6 +77,8 @@ namespace gameanalytics
 
          static void addErrorEvent(EGAErrorSeverity severity, std::string const& message, std::string const& customFields = "", bool mergeFields = false);
 
+         static void addLevelEvent(EGALevelStatus status, int levelId, std::string const& levelName, int value = 0, std::string const& customFields);
+
          // set calls can be changed at any time (pre- and post-initialize)
          // some calls only work after a configure is called (setCustomDimension)
          static void setEnabledInfoLog(bool flag);

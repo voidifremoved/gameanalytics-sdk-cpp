@@ -150,6 +150,20 @@ namespace gameanalytics
                 int64_t calculateSessionLength() const;
 
         private:
+
+            struct LevelContext
+            {
+                static constexpr int32_t INVALID_LVL = -1;
+
+                int32_t              levelId{INVALID_LVL};
+                std::string          levelName;
+                utilities::Stopwatch timer;
+
+                inline bool IsInLevel() const { return levelId != INVALID_LVL; }
+
+                bool StartLevel(int32_t id, std::string const& name);
+                bool EndLevel();
+            };
             
             GAState();
             ~GAState();
@@ -184,6 +198,8 @@ namespace gameanalytics
             void setAbVariantId(std::string const& abVariantId);
 
             void addErrorEvent(EGAErrorSeverity severity, std::string const& message);
+
+            bool updateLevelContext(EGALevelStatus status, int levelId, std::string const& levelName);
 
             threading::GAThreading  _gaThread;
             events::GAEvents        _gaEvents;
@@ -244,6 +260,8 @@ namespace gameanalytics
             bool _enableEventSubmission     = true;
 
             bool _enableIdTracking = true;
+
+            LevelContext _levelContext;
             
             json _configurations;
             bool _remoteConfigsIsReady;

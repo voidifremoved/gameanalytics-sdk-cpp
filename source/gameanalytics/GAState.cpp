@@ -27,6 +27,35 @@ namespace gameanalytics
 
     namespace state
     {
+        bool GAState::LevelContext::StartLevel(int32_t id, std::string const& name)
+        {
+            if(!IsInLevel() && id > 0)
+            {
+                levelId = id;
+                levelName = name;
+
+                timer.reset();
+                timer.start();
+
+                return true;
+            }
+
+            return false;
+        }
+
+        bool GAState::LevelContext::EndLevel()
+        {
+            if(IsInLevel())
+            {
+                levelId = INVALID_LVL;
+                levelName = "";
+
+                return true;
+            }
+
+            return false;
+        }
+
         GAState& GAState::getInstance()
         {
             static GAState instance;
@@ -305,7 +334,8 @@ namespace gameanalytics
         bool GAState::hasAvailableCustomDimensions02(std::string const& dimension2)
         {
             return utilities::GAUtilities::stringVectorContainsString(
-                getInstance()._availableCustomDimensions02, dimension2);
+                getInstance()._availableCustomDimensions02, dimension2
+            );
         }
 
         bool GAState::hasAvailableCustomDimensions03(std::string const& dimension3)
@@ -427,6 +457,13 @@ namespace gameanalytics
 
                 // ---- OPTIONAL ---- //
 
+                // level
+                if(getInstance()._levelContext.IsInLevel())
+                {
+                    out["level_name"] = getInstance()._levelContext.levelName;
+                    out["level_id"]   = getInstance()._levelContext.levelId;
+                }
+
                 // A/B testing
                 utilities::addIfNotEmpty(out, "ab_id", getInstance()._abId);
                 utilities::addIfNotEmpty(out, "ab_variant_id", getInstance()._abVariantId);
@@ -465,7 +502,7 @@ namespace gameanalytics
             out["device"]           = device::GADevice::getDeviceModel();
             out["platform"]         = device::GADevice::getBuildPlatform();
             out["connection_type"]  = device::GADevice::getConnectionType();
-            out["category"]         = "sdk_error";
+            out["category"]         = CategorySdkError;
 
             // ---- OPTIONAL ---- //
 
@@ -1131,6 +1168,35 @@ namespace gameanalytics
             getInstance().validateAndCleanCustomFields(d, cleanedFields);
 
             return cleanedFields;
+        }
+
+        bool GAState::updateLevelContext(EGALevelStatus status, int id, std::string const& levelName)
+        {
+            switch(status)
+            {
+                case EGALevelStatus::Start:
+                {
+                    if(_levelContext.IsInLevel())
+                    {
+                        
+                    }
+
+                    return _levelContext.StartLevel(id, levelName);
+                }
+
+                case EGALevelStatus::Failure:
+                case EGALevelStatus::Complete:
+                case EGALevelStatus::Abort:
+                {
+                    if(!_levelContext.IsInLevel())
+                    {
+                        logging::GALogger::w("No active level found. A level start event must be called before Failure/Complete/Abort events!");
+                        return false;
+                    }
+
+                    return _levelContext.EndLevel();
+                }
+            }
         }
     }
 }

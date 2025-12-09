@@ -44,7 +44,6 @@ namespace gameanalytics
             executeQuerySync(sql, {}, 0, out);
         }
 
-
         void GAStore::executeQuerySync(std::string const& sql, StringVector const& parameters)
         {
             json d;

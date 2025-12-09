@@ -72,6 +72,12 @@ namespace gameanalytics
                 http::EGASdkErrorArea area, 
                 http::EGASdkErrorAction action);
 
+            static validators::ValidationResult validateLevelEvent(
+                EGALevelStatus status,
+                int id,
+                std::string const& name
+            );
+
 
             // -------------------- HELPERS --------------------- //
 

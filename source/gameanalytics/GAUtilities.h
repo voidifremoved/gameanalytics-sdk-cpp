@@ -16,6 +16,28 @@ namespace gameanalytics
 {
     namespace utilities
     {
+        class Stopwatch
+        {
+            std::chrono::time_point _start{};
+            std::chrono::time_point _end{};
+            std::chrono::seconds    _duration{};
+
+            bool _isRunning{false};
+            
+            public:
+
+                Stopwatch() = default;
+
+                uint64_t getSeconds();
+
+                bool start();
+                bool stop();
+
+                inline bool isRunning() const { return _isRunning; }
+
+                void reset();
+        };
+
         template<typename ...args_t>
         std::string printString(std::string const& fmt, args_t&&... args)
         {

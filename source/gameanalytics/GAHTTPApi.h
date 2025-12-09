@@ -53,6 +53,7 @@ namespace gameanalytics
             ProgressionEvent = 3,
             DesignEvent = 4,
             ErrorEvent = 5,
+            LevelEvent = 6,
             InitHttp = 9,
             EventsHttp = 10,
             ProcessEvents = 11,

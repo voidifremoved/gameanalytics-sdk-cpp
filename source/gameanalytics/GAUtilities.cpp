@@ -26,6 +26,46 @@ namespace gameanalytics
 {
     namespace utilities
     {
+        Stopwatch::Stopwatch()
+        {
+            reset();
+        }
+
+        uint64_t Stopwatch::getSeconds()
+        {
+            return _duration.count();
+        }
+
+        bool Stopwatch::start()
+        {
+            if(!_isRunning)
+            {
+                _start = std::chrono::steady_clock::now();
+                _isRunning = true;
+                return true;
+            }
+
+            return false;
+        }
+
+        void Stopwatch::stop()
+        {
+            if(_isRunning)
+            {
+                _end = std::chrono::steady_clock::now();
+                _duration += std::chrono::duration_cast<std::chrono::seconds>(_end - _start);
+                _isRunning = false;
+                return true;
+            }
+
+            return false;
+        }
+
+        void Stopwatch::reset()
+        {
+            _duration = std::chrono::seconds(0);
+        }
+
         std::string printArray(StringVector const& v, std::string const& delim)
         {
             if(v.empty())

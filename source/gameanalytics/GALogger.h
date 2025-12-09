@@ -102,7 +102,7 @@ namespace gameanalytics
 
          private:
 
-            static constexpr const char* tag = "GameAnalytics";
+            static constexpr const char* TAG = "GameAnalytics";
             static GALogger& getInstance();
 
             GALogger();

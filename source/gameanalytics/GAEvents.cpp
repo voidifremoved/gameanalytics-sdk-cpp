@@ -473,6 +473,56 @@ namespace gameanalytics
             }
         }
 
+        void GAEvents::addLevelEvent(EGALevelStatus status, int id, std::string const& name, int value, const json& fields)
+        {
+            try
+            {
+                if(!state::GAState::isEventSubmissionEnabled())
+                {
+                    return;
+                }
+
+                if(!state::GAState::getInstance().updateLevelContext(status, id, name))
+                {
+                    logging::GALogger::e("Invalid level");
+                    return;
+                }
+
+                // Validate
+                validators::ValidationResult validationResult = validators::GAValidator::validateLevelEvent(status, id, name);
+                if (!validationResult.result)
+                {
+                    http::GAHTTPApi& httpInstance = http::GAHTTPApi::getInstance();
+                    httpInstance.sendSdkErrorEvent(validationResult.category, validationResult.area, validationResult.action, validationResult.parameter, validationResult.reason, state::GAState::getGameKey(), state::GAState::getGameSecret());
+                    return;
+                }
+
+                // Create empty eventData
+                json eventData;
+                eventData["category"]   = GAEvents::CategoryLevel;
+                eventData["status"]     = levelStatusString(status);
+                eventData["level_id"]   = id;
+                eventData["level_name"] = name;
+                eventData["value"]      = value;
+
+                json cleanedFields = state::GAState::getValidatedCustomFields(fields);
+                getInstance().addCustomFieldsToEvent(eventData, cleanedFields);
+
+                // Add custom dimensions
+                getInstance().addDimensionsToEvent(eventData);
+
+                // Log
+                logging::GALogger::i("Add LEVEL event: %s", eventData.dump().c_str());
+
+                // Send to store
+                getInstance().addEventToStore(eventData);
+            }
+            catch(std::exception& e)
+            {
+                logging::GALogger::e("addLevelEvent - Exception thrown: %s", e.what());
+            }
+        }
+
         void GAEvents::processEventQueue()
         {
             processEvents("", true);
@@ -590,36 +640,7 @@ namespace gameanalytics
             http::EGAHTTPApiResponse responseEnum;
             http::GAHTTPApi& http = http::GAHTTPApi::getInstance();
 
-#if USE_UWP && defined(USE_UWP_HTTP)
-            std::pair<http::EGAHTTPApiResponse, std::string> pair;
-
-            try
-            {
-                pair = http->sendEventsInArray(payloadArray).get();
-            }
-            catch(Platform::COMException^ e)
-            {
-                pair = std::pair<http::EGAHTTPApiResponse, std::string>(http::NoResponse, "");
-            }
-            responseEnum = pair.first;
-
-            if(pair.second.size() > 0)
-            {
-                try
-                {
-                    json d = json::parse(pair.second);
-                    dataDict.merge_patch(d);
-                }
-                catch(const json::exception& e)
-                {
-                    logging::GALogger::d("processEvents -- JSON error: %s", e.what());
-                    logging::GALogger::d("%s", pair.second.c_str());
-                }
-            }
-#else
             responseEnum = http.sendEventsInArray(dataDict, payloadArray);
-#endif
-
             if (responseEnum == http::Ok)
             {
                 // Delete events

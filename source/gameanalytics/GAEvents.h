@@ -27,6 +27,7 @@ namespace gameanalytics
             static void addProgressionEvent(EGAProgressionStatus progressionStatus, std::string const& progression01, std::string const& progression02, std::string const& progression03, int score, bool sendScore, const json& fields, bool mergeFields);
             static void addDesignEvent(std::string const& eventId, double value, bool sendValue, const json& fields, bool mergeFields);
             static void addErrorEvent(EGAErrorSeverity severity, std::string const& message, std::string const& function, int32_t line, const json& fields, bool mergeFields, bool skipAddingFields = false);
+            static void addLevelEvent(EGALevelStatus status, int id, std::string const& name, int value, const json& fields);
 
             static void addSDKInitEvent();
             static void addHealthEvent();
@@ -34,6 +35,7 @@ namespace gameanalytics
             static std::string progressionStatusString(EGAProgressionStatus progressionStatus);
             static std::string errorSeverityString(EGAErrorSeverity errorSeverity);
             static std::string resourceFlowTypeString(EGAResourceFlowType flowType);
+            static std::string levelStatusString(EGALevelStatus lvlStatus);
 
             static void processEvents(std::string const& category, bool performCleanUp);
 
@@ -51,6 +53,7 @@ namespace gameanalytics
             static constexpr const char* CategoryError                  = "error";
             static constexpr const char* CategorySDKInit                = "sdk_init";
             static constexpr const char* CategoryHealth                 = "health";
+            static constexpr const char* CategoryLevel                  = "level";
             static constexpr int         MaxEventCount                  = 500;
 
             static constexpr std::chrono::milliseconds PROCESS_EVENTS_INTERVAL{8000};

@@ -126,6 +126,37 @@ namespace gameanalytics
             out.result = true;
         }
 
+        validators::ValidationResult GAValidator::validateLevelEvent(EGALevelStatus status, int id, std::string const& name)
+        {
+            validators::ValidationResult out;
+
+            std::string statusString = events::GAEvents::levelStatusString(status);
+            if(statusString.empty())
+            {
+                logging::GALogger::w("Validation fail - level event - invalid status");
+                out.category = http::EGASdkErrorCategory::EventValidation;
+                out.area = http::EGASdkErrorArea::LevelEvent;
+                out.action = http::EGASdkErrorAction::InvalidEventPartCharacters;
+                out.parameter = http::EGASdkErrorParameter::ProgressionStatus;
+
+                return out;
+            }
+
+            if(id < 0)
+            {
+                logging::GALogger::w("Validation fail - level event - id value cannot be negative");
+                return out;
+            }
+
+            if(name.empty())
+            {
+                logging::GALogger::w("Validation fail - level event - level name cannot be empty");
+                return out;
+            }
+
+            return out;
+        }
+
         void GAValidator::validateResourceEvent(
             EGAResourceFlowType flowType,
             std::string const& currency,

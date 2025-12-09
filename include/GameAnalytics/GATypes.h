@@ -73,6 +73,14 @@ namespace gameanalytics
         LogVerbose  = 4
     };
 
+    enum class EGALevelStatus
+    {
+        Abort    = -1,
+        Start    = 0,
+        Complete = 1,
+        Failure  = 2,
+    };
+
     using StringVector = std::vector<std::string>;
 
     using LogHandler = std::function<void(std::string const&, EGALoggerMessageType)>;

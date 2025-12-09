@@ -530,6 +530,32 @@ namespace gameanalytics
         return addDesignEvent(eventId, 0.0, fields, mergeFields);
     }
 
+    void GameAnalytics::addLevelEvent(EGALevelStatus status, int levelId, std::string const& levelName, int value, std::string const& fields)
+    {
+        if(_endThread)
+        {
+            return;
+        }
+
+        threading::GAThreading::performTaskOnGAThread([=]()
+        {
+            if (!isSdkReady(true, true, "Could not add level event"))
+            {
+                return;
+            }
+            
+            try
+            {
+                json fieldsJson = utilities::parseFields(fields);
+                events::GAEvents::addLevelEvent(status, levelId, levelName, value, fieldsJson);
+            }
+            catch(json::exception const& e)
+            {
+                logging::GALogger::e("addLevelEvent - Failed to parse fields: %s", e.what());
+            }
+        });
+    }
+
     void GameAnalytics::addErrorEvent(EGAErrorSeverity severity, std::string const& message_, std::string const& fields, bool mergeFields)
     {
         if(_endThread)
