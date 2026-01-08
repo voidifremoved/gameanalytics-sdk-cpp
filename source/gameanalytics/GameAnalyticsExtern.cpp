@@ -1,8 +1,9 @@
-#if GA_SHARED_LIB
+#include "GameAnalyticsExtern.h"
+
+#ifdef GA_SHARED_LIB
 
 #include "GameAnalytics/GameAnalytics.h"
 #include "GAUtilities.h"
-#include "GameAnalyticsExtern.h"
 
 gameanalytics::StringVector makeStringVector(const char** arr, int size)
 {
@@ -23,24 +24,14 @@ gameanalytics::StringVector makeStringVector(const char** arr, int size)
     return {};
 }
 
-GAErrorCode copyStringBuffer(std::string const& s, char* out, int* size)
+void gameAnalytics_freeString(const char* ptr)
 {
-    if(size && (*size > 0))
-    {
-        if(out && (*size >= s.size()))
-        {
-            std::memcpy(out, s.data(), s.size());
-        }
-        else
-        {
-            return EGABufferError;
-        }
+    std::free((void*)ptr);
+}
 
-        *size = static_cast<int>(s.size());
-        return EGANoError;
-    }
-
-    return EGAFailure;
+const char* gameAnalytics_allocString(std::string const& s)
+{
+    return strndup(s.c_str(), s.size());
 }
 
 void gameAnalytics_configureAvailableCustomDimensions01(const char **customDimensions, int size)
@@ -129,7 +120,7 @@ void gameAnalytics_addBusinessEvent(const char *currency, double amount, const c
     gameanalytics::GameAnalytics::addBusinessEvent(currency, (int)amount, itemType, itemId, cartType, fields, mergeFields);
 }
 
-void gameAnalytics_addResourceEvent(int flowType, const char *currency, double amount, const char *itemType, const char *itemId, const char *fields, GAStatus mergeFields)
+void gameAnalytics_addResourceEvent(GAResourceFlowType flowType, const char *currency, double amount, const char *itemType, const char *itemId, const char *fields, GAStatus mergeFields)
 {
     gameanalytics::GameAnalytics::addResourceEvent((gameanalytics::EGAResourceFlowType)flowType, currency, (float)amount, itemType, itemId, fields, mergeFields);
 }
@@ -234,16 +225,28 @@ void gameAnalytics_onQuit()
     gameanalytics::GameAnalytics::onQuit();
 }
 
-GAErrorCode gameAnalytics_getRemoteConfigsValueAsString(const char *key, char* out, int* size)
+const char* gameAnalytics_getUserId()
 {
-    std::string returnValue = gameanalytics::GameAnalytics::getRemoteConfigsValueAsString(key);
-    return copyStringBuffer(returnValue, out, size);
+    std::string returnValue = gameanalytics::GameAnalytics::getUserId();
+    return gameAnalytics_allocString(returnValue);
 }
 
-GAErrorCode gameAnalytics_getRemoteConfigsValueAsStringWithDefaultValue(const char *key, const char *defaultValue, char* out, int* size)
+const char* gameAnalytics_getExternalUserId()
+{
+    std::string returnValue = gameanalytics::GameAnalytics::getExternalUserId();
+    return gameAnalytics_allocString(returnValue);
+}
+
+const char* gameAnalytics_getRemoteConfigsValueAsString(const char *key)
+{
+    std::string returnValue = gameanalytics::GameAnalytics::getRemoteConfigsValueAsString(key);
+    return gameAnalytics_allocString(returnValue);
+}
+
+const char* gameAnalytics_getRemoteConfigsValueAsStringWithDefaultValue(const char *key, const char *defaultValue)
 {
     std::string returnValue = gameanalytics::GameAnalytics::getRemoteConfigsValueAsString(key, defaultValue);
-    return copyStringBuffer(returnValue, out, size);
+    return gameAnalytics_allocString(returnValue);
 }
 
 GAStatus gameAnalytics_isRemoteConfigsReady()
@@ -251,28 +254,28 @@ GAStatus gameAnalytics_isRemoteConfigsReady()
     return gameanalytics::GameAnalytics::isRemoteConfigsReady() ? EGAEnabled : EGADisabled;
 }
 
-GAErrorCode gameAnalytics_getRemoteConfigsContentAsString(char* out, int* size)
+const char* gameAnalytics_getRemoteConfigsContentAsString()
 {
     std::string returnValue = gameanalytics::GameAnalytics::getRemoteConfigsContentAsString();
-    return copyStringBuffer(returnValue, out, size);
+    return gameAnalytics_allocString(returnValue);
 }
 
-GAErrorCode gameAnalytics_getRemoteConfigsValueAsJson(const char* key, char* out, int* size)
+const char* gameAnalytics_getRemoteConfigsValueAsJson(const char* key)
 {
     std::string returnValue = gameanalytics::GameAnalytics::getRemoteConfigsValueAsJson(key);
-    return copyStringBuffer(returnValue, out, size);
+    return gameAnalytics_allocString(returnValue);
 }
 
-GAErrorCode gameAnalytics_getABTestingId(char* out, int* size)
+const char* gameAnalytics_getABTestingId()
 {
     std::string returnValue = gameanalytics::GameAnalytics::getABTestingId();
-    return copyStringBuffer(returnValue, out, size);
+    return gameAnalytics_allocString(returnValue);
 }
 
-GAErrorCode gameAnalytics_getABTestingVariantId(char* out, int* size)
+const char* gameAnalytics_getABTestingVariantId(char* out)
 {
     std::string returnValue = gameanalytics::GameAnalytics::getABTestingVariantId();
-    return copyStringBuffer(returnValue, out, size);
+    return gameAnalytics_allocString(returnValue);
 }
 
 long long gameAnalytics_getElapsedSessionTime()
