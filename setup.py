@@ -111,7 +111,14 @@ def main():
 	files_to_copy = glob.glob(f'{build_output_dir}/{args.cfg}/*GameAnalytics.*')
 	for file in files_to_copy:
 		shutil.copy(file, package_dir)
+	
+	# Copy include directory
 	shutil.copytree(os.path.join(os.getcwd(), 'include'), os.path.join(package_dir, 'include'), dirs_exist_ok=True)
+	
+	# For shared library builds, also copy the C API header
+	if args.shared:
+		extern_header = os.path.join(os.getcwd(), 'source', 'gameanalytics', 'GameAnalyticsExtern.h')
+		shutil.copy(extern_header, os.path.join(package_dir, 'include', 'GameAnalytics'))
 
 	# Print Package Contents
 	if args.platform.startswith('win'):
