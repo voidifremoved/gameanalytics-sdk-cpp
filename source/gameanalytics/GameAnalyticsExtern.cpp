@@ -4,6 +4,8 @@
 
 #include "GameAnalytics/GameAnalytics.h"
 #include "GAUtilities.h"
+#include <cstring>
+#include <cstdlib>
 
 gameanalytics::StringVector makeStringVector(const char** arr, int size)
 {
@@ -29,9 +31,26 @@ GA_API void gameAnalytics_freeString(const char* ptr)
     std::free((void*)ptr);
 }
 
+// Cross-platform string duplication function
+static char* ga_strndup(const char* s, size_t n)
+{
+    if (!s) return nullptr;
+    
+    size_t len = std::strlen(s);
+    if (len > n) len = n;
+    
+    char* result = (char*)std::malloc(len + 1);
+    if (result)
+    {
+        std::memcpy(result, s, len);
+        result[len] = '\0';
+    }
+    return result;
+}
+
 const char* gameAnalytics_allocString(std::string const& s)
 {
-    return strndup(s.c_str(), s.size());
+    return ga_strndup(s.c_str(), s.size());
 }
 
 static inline const char* safeString(const char* str)
