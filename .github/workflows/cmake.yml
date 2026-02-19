@@ -71,6 +71,12 @@ jobs:
       run: |
         echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
 
+    - name: Install libc++ on Ubuntu
+      if: matrix.os == 'ubuntu-latest' && matrix.c_compiler == 'clang'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libc++-dev libc++abi-dev
+
     - name: Display Clang Info
       if: matrix.os == 'ubuntu-latest' && matrix.c_compiler == 'clang'
       run: |
