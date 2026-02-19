@@ -42,6 +42,10 @@ def main():
 	if args.compiler and not args.platform.startswith('linux'):
 		parser.error('--compiler can only be used with Linux platforms')
 
+	# Validate coverage is not used with shared library
+	if args.coverage and args.shared:
+		parser.error('--coverage cannot be used with --shared (coverage requires tests which need static library)')
+
 	# Get compiler configuration for this platform (single compiler, like cmake.yml)
 	compiler_config = get_compiler_for_platform(args.platform, args.compiler)
 	c_compiler = compiler_config.get('c', '')
