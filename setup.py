@@ -70,15 +70,17 @@ def main():
 	if cxx_compiler:
 		cmake_command += f' -DCMAKE_CXX_COMPILER={cxx_compiler}'
 	
-	# Add build type for single-config generators (Makefile, Ninja)
-	cmake_command += f' -DCMAKE_BUILD_TYPE={args.cfg}'
-	
 	# Configure for shared library build
 	if args.shared:
 		cmake_command += ' -DGA_SHARED_LIB=ON'
 	
 	if args.platform == 'osx':
 		cmake_command += ' -G "Xcode"'
+	
+	# Add build type for single-config generators (Linux uses Makefile/Ninja)
+	# Multi-config generators (Xcode, Visual Studio) use --config at build time instead
+	if args.platform.startswith('linux'):
+		cmake_command += f' -DCMAKE_BUILD_TYPE={args.cfg}'
 	if args.platform:
 		cmake_command += f' -DPLATFORM:STRING={args.platform}'
 	if args.coverage:
