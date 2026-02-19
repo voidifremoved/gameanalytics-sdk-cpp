@@ -71,7 +71,7 @@ def main():
 	
 	# Configure for shared library build
 	if args.shared:
-		cmake_command += ' -DGA_SHARED_LIB=ON -DGA_BUILD_SAMPLE=OFF'
+		cmake_command += ' -DGA_SHARED_LIB=ON'
 	
 	if args.platform == 'osx':
 		cmake_command += ' -G "Xcode"'

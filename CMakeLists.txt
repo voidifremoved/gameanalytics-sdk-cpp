@@ -207,7 +207,11 @@ elseif(LINUX)
 endif()
 
 if(${GA_BUILD_SAMPLE})
-    add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/sample")
+    if(${GA_SHARED_LIB})
+        add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/sample_shared")
+    else()
+        add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/sample")
+    endif()
 endif()
 
 add_library(GameAnalytics ${LIB_TYPE} ${CPP_SOURCES})
