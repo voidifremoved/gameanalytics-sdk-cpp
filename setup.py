@@ -116,7 +116,7 @@ def main():
 	if args.platform == 'osx':
 		run_command(f'lipo -info {package_dir}/*GameAnalytics.*')
 	
-	print(f"\n✓ {lib_type.capitalize()} library build completed for {args.platform} with {compiler_name}")
+	print(f"\n[OK] {lib_type.capitalize()} library build completed for {args.platform} with {compiler_name}")
 	print(f"  Package location: {package_dir}\n")
 
 if __name__ == "__main__":
