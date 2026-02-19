@@ -34,6 +34,11 @@ const char* gameAnalytics_allocString(std::string const& s)
     return strndup(s.c_str(), s.size());
 }
 
+static inline const char* safeString(const char* str)
+{
+    return str ? str : "";
+}
+
 GA_API void gameAnalytics_configureAvailableCustomDimensions01(const char **customDimensions, int size)
 {
     gameanalytics::StringVector values = makeStringVector(customDimensions, size);
@@ -66,22 +71,22 @@ GA_API void gameAnalytics_configureAvailableResourceItemTypes(const char** resou
 
 GA_API void gameAnalytics_configureBuild(const char *build)
 {
-    gameanalytics::GameAnalytics::configureBuild(build);
+    gameanalytics::GameAnalytics::configureBuild(safeString(build));
 }
 
 GA_API void gameAnalytics_configureWritablePath(const char *writablePath)
 {
-    gameanalytics::GameAnalytics::configureWritablePath(writablePath);
+    gameanalytics::GameAnalytics::configureWritablePath(safeString(writablePath));
 }
 
 GA_API void gameAnalytics_configureDeviceModel(const char *deviceModel)
 {
-    gameanalytics::GameAnalytics::configureDeviceModel(deviceModel);
+    gameanalytics::GameAnalytics::configureDeviceModel(safeString(deviceModel));
 }
 
 GA_API void gameAnalytics_configureDeviceManufacturer(const char *deviceManufacturer)
 {
-    gameanalytics::GameAnalytics::configureDeviceManufacturer(deviceManufacturer);
+    gameanalytics::GameAnalytics::configureDeviceManufacturer(safeString(deviceManufacturer));
 }
 
 // the version of SDK code used in an engine. Used for sdk_version field.
@@ -89,65 +94,65 @@ GA_API void gameAnalytics_configureDeviceManufacturer(const char *deviceManufact
 // example "unity 4.6.9"
 GA_API void gameAnalytics_configureSdkGameEngineVersion(const char *sdkGameEngineVersion)
 {
-    gameanalytics::GameAnalytics::configureSdkGameEngineVersion(sdkGameEngineVersion);
+    gameanalytics::GameAnalytics::configureSdkGameEngineVersion(safeString(sdkGameEngineVersion));
 }
 
 // the version of the game engine (if used and version is available)
 GA_API void gameAnalytics_configureGameEngineVersion(const char *engineVersion)
 {
-    gameanalytics::GameAnalytics::configureGameEngineVersion(engineVersion);
+    gameanalytics::GameAnalytics::configureGameEngineVersion(safeString(engineVersion));
 }
 
 GA_API void gameAnalytics_configureUserId(const char *uId)
 {
-    gameanalytics::GameAnalytics::configureUserId(uId);
+    gameanalytics::GameAnalytics::configureUserId(safeString(uId));
 }
 
 GA_API void gameAnalytics_configureExternalUserId(const char* extId)
 {
-    gameanalytics::GameAnalytics::configureExternalUserId(extId);
+    gameanalytics::GameAnalytics::configureExternalUserId(safeString(extId));
 }
 
 // initialize - starting SDK (need configuration before starting)
 GA_API void gameAnalytics_initialize(const char *gameKey, const char *gameSecret)
 {
-    gameanalytics::GameAnalytics::initialize(gameKey, gameSecret);
+    gameanalytics::GameAnalytics::initialize(safeString(gameKey), safeString(gameSecret));
 }
 
 // add events
 GA_API void gameAnalytics_addBusinessEvent(const char *currency, double amount, const char *itemType, const char *itemId, const char *cartType, const char *customFields, GAStatus mergeFields)
 {
-    gameanalytics::GameAnalytics::addBusinessEvent(currency, (int)amount, itemType, itemId, cartType, customFields, mergeFields);
+    gameanalytics::GameAnalytics::addBusinessEvent(safeString(currency), (int)amount, safeString(itemType), safeString(itemId), safeString(cartType), safeString(customFields), mergeFields);
 }
 
 GA_API void gameAnalytics_addResourceEvent(GAResourceFlowType flowType, const char *currency, double amount, const char *itemType, const char *itemId, const char *customFields, GAStatus mergeFields)
 {
-    gameanalytics::GameAnalytics::addResourceEvent((gameanalytics::EGAResourceFlowType)flowType, currency, (float)amount, itemType, itemId, customFields, mergeFields);
+    gameanalytics::GameAnalytics::addResourceEvent((gameanalytics::EGAResourceFlowType)flowType, safeString(currency), (float)amount, safeString(itemType), safeString(itemId), safeString(customFields), mergeFields);
 }
 
 GA_API void gameAnalytics_addProgressionEvent(GAProgressionStatus progressionStatus, const char *progression01, const char *progression02, const char *progression03, const char *customFields, GAStatus mergeFields)
 {
-    gameanalytics::GameAnalytics::addProgressionEvent((gameanalytics::EGAProgressionStatus)progressionStatus, progression01, progression02, progression03, customFields, mergeFields);
+    gameanalytics::GameAnalytics::addProgressionEvent((gameanalytics::EGAProgressionStatus)progressionStatus, safeString(progression01), safeString(progression02), safeString(progression03), safeString(customFields), mergeFields);
 }
 
 GA_API void gameAnalytics_addProgressionEventWithScore(GAProgressionStatus progressionStatus, const char *progression01, const char *progression02, const char *progression03, int score, const char *customFields, GAStatus mergeFields)
 {
-    gameanalytics::GameAnalytics::addProgressionEvent((gameanalytics::EGAProgressionStatus)progressionStatus, score, progression01, progression02, progression03, customFields, mergeFields);
+    gameanalytics::GameAnalytics::addProgressionEvent((gameanalytics::EGAProgressionStatus)progressionStatus, score, safeString(progression01), safeString(progression02), safeString(progression03), safeString(customFields), mergeFields);
 }
 
 GA_API void gameAnalytics_addDesignEvent(const char *eventId, const char *customFields, GAStatus mergeFields)
 {
-    gameanalytics::GameAnalytics::addDesignEvent(eventId, customFields, (bool)mergeFields);
+    gameanalytics::GameAnalytics::addDesignEvent(safeString(eventId), safeString(customFields), (bool)mergeFields);
 }
 
 GA_API void gameAnalytics_addDesignEventWithValue(const char *eventId, double value, const char *customFields, GAStatus mergeFields)
 {
-    gameanalytics::GameAnalytics::addDesignEvent(eventId, value, customFields, (bool)mergeFields);
+    gameanalytics::GameAnalytics::addDesignEvent(safeString(eventId), value, safeString(customFields), (bool)mergeFields);
 }
 
 GA_API void gameAnalytics_addErrorEvent(GAErrorSeverity severity, const char *message, const char *customFields, GAStatus mergeFields)
 {
-    gameanalytics::GameAnalytics::addErrorEvent((gameanalytics::EGAErrorSeverity)severity, message, customFields, (bool)mergeFields);
+    gameanalytics::GameAnalytics::addErrorEvent((gameanalytics::EGAErrorSeverity)severity, safeString(message), safeString(customFields), (bool)mergeFields);
 }
 
 // set calls can be changed at any time (pre- and post-initialize)
@@ -180,22 +185,22 @@ GA_API void gameAnalytics_setEnabledEventSubmission(GAStatus flag)
 
 GA_API void gameAnalytics_setCustomDimension01(const char *dimension01)
 {
-    gameanalytics::GameAnalytics::setCustomDimension01(dimension01);
+    gameanalytics::GameAnalytics::setCustomDimension01(safeString(dimension01));
 }
 
 GA_API void gameAnalytics_setCustomDimension02(const char *dimension02)
 {
-    gameanalytics::GameAnalytics::setCustomDimension02(dimension02);
+    gameanalytics::GameAnalytics::setCustomDimension02(safeString(dimension02));
 }
 
 GA_API void gameAnalytics_setCustomDimension03(const char *dimension03)
 {
-    gameanalytics::GameAnalytics::setCustomDimension03(dimension03);
+    gameanalytics::GameAnalytics::setCustomDimension03(safeString(dimension03));
 }
 
 GA_API void gameAnalytics_setGlobalCustomEventFields(const char *customFields)
 {
-    gameanalytics::GameAnalytics::setGlobalCustomEventFields(customFields);
+    gameanalytics::GameAnalytics::setGlobalCustomEventFields(safeString(customFields));
 }
 
 GA_API void gameAnalytics_startSession()
@@ -239,13 +244,13 @@ GA_API const char* gameAnalytics_getExternalUserId()
 
 GA_API const char* gameAnalytics_getRemoteConfigsValueAsString(const char *key)
 {
-    std::string returnValue = gameanalytics::GameAnalytics::getRemoteConfigsValueAsString(key);
+    std::string returnValue = gameanalytics::GameAnalytics::getRemoteConfigsValueAsString(safeString(key));
     return gameAnalytics_allocString(returnValue);
 }
 
 GA_API const char* gameAnalytics_getRemoteConfigsValueAsStringWithDefaultValue(const char *key, const char *defaultValue)
 {
-    std::string returnValue = gameanalytics::GameAnalytics::getRemoteConfigsValueAsString(key, defaultValue);
+    std::string returnValue = gameanalytics::GameAnalytics::getRemoteConfigsValueAsString(safeString(key), safeString(defaultValue));
     return gameAnalytics_allocString(returnValue);
 }
 
@@ -262,7 +267,7 @@ GA_API const char* gameAnalytics_getRemoteConfigsContentAsString()
 
 GA_API const char* gameAnalytics_getRemoteConfigsValueAsJson(const char* key)
 {
-    std::string returnValue = gameanalytics::GameAnalytics::getRemoteConfigsValueAsJson(key);
+    std::string returnValue = gameanalytics::GameAnalytics::getRemoteConfigsValueAsJson(safeString(key));
     return gameAnalytics_allocString(returnValue);
 }
 
