@@ -1,5 +1,7 @@
 #pragma once
 
+// --- Platform Detection (must come before platform-specific includes) ---
+
 #if defined(_WIN32) || defined(_WIN64) || defined(GA_UWP_BUILD)
 
     #ifndef GA_UWP_BUILD
@@ -25,7 +27,39 @@
     #define IS_UWP   0
 #endif
 
-#if IS_MAC
+#if defined(__ANDROID__)
+    #define IS_ANDROID 1
+#else
+    #define IS_ANDROID 0
+#endif
+
+#if defined(__linux__) || defined(__unix__) || defined(__unix) || defined(unix)
+    #if !IS_ANDROID
+        #define IS_LINUX 1
+    #else
+        #define IS_LINUX 0
+    #endif
+#else
+    #define IS_LINUX 0
+#endif
+
+#if defined(__MACH__) || defined(__APPLE__)
+    #include <TargetConditionals.h>
+    #if TARGET_OS_IOS || TARGET_OS_TV
+        #define IS_IOS 1
+        #define IS_MAC 0
+    #else
+        #define IS_IOS 0
+        #define IS_MAC 1
+    #endif
+#else
+    #define IS_IOS 0
+    #define IS_MAC 0
+#endif
+
+// --- Platform-specific system headers ---
+
+#if IS_MAC || IS_IOS
     #include <sys/sysctl.h>
 #elif IS_WIN32
     #include <winsock2.h>
@@ -33,6 +67,10 @@
 #elif IS_UWP
     #include <winsock2.h>
     #include <windows.h>
+#elif IS_ANDROID
+    #include <sys/utsname.h>
+    #include <sys/types.h>
+    #include <sys/stat.h>
 #elif IS_LINUX
     #include <sys/utsname.h>
     #include <sys/types.h>
@@ -63,18 +101,6 @@
 #include <array>
 
 #include "nlohmann/json.hpp"
-
-#if defined(__linux__) || defined(__unix__) || defined(__unix) || defined(unix)
-    #define IS_LINUX 1
-#else
-    #define IS_LINUX 0
-#endif
-
-#if defined(__MACH__) || defined(__APPLE__)
-    #define IS_MAC 1
-#else
-    #define IS_MAC 0
-#endif
 
 namespace gameanalytics
 {
