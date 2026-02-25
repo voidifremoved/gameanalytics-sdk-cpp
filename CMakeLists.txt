@@ -18,7 +18,8 @@ include("eval_condition_macro")
 option(ENABLE_COVERAGE "Enable code coverage reporting" OFF)
 option(GA_SHARED_LIB "Build GA as a shared library" OFF)
 option(GA_UWP_BUILD  "Build GA for UWP (if targeting windows)" OFF)
-option(GA_BUILD_SAMPLE "Builds the GA Sample app" ON)
+option(GA_BUILD_SAMPLE "Builds the GA Sample app" OFF)
+option(GA_BUILD_TESTS "Builds the GA unit tests" OFF)
 option(GA_USE_PACKAGE "Use installed packages for dependencies" OFF)
 
 # set directories
@@ -75,11 +76,16 @@ FILE(GLOB_RECURSE CPP_SOURCES
 create_source_groups(CPP_SOURCES)
 
 # --------------------------- Detect Platform Automatically --------------------------- #
-# Check if the PLATFORM variable was passed in from the command line
 if(NOT DEFINED PLATFORM)
     message(STATUS "PLATFORM not set. Detecting platform...")
 
-    if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    if(CMAKE_SYSTEM_NAME STREQUAL "Android")
+        set(PLATFORM "android")
+
+    elseif(CMAKE_SYSTEM_NAME STREQUAL "iOS")
+        set(PLATFORM "ios")
+
+    elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
         if(CMAKE_SIZEOF_VOID_P EQUAL 8)
             set(PLATFORM "linux_x64")
         else()
@@ -87,14 +93,12 @@ if(NOT DEFINED PLATFORM)
         endif()
 
     elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-        # macOS
         set(PLATFORM "osx")
 
     elseif(CMAKE_SYSTEM_NAME STREQUAL "Windows")
         if(CMAKE_SIZEOF_VOID_P EQUAL 8)
             set(PLATFORM "win64")
         elseif(CMAKE_SYSTEM_VERSION MATCHES "10.0")
-            # UWP platform
             set(PLATFORM "uwp")
         else()
             set(PLATFORM "win32")
@@ -111,11 +115,9 @@ endif()
 
 # --------------------------- Detect Architecture Automatically --------------------------- #
 
-# Print the system architecture
 message(STATUS "System architecture: ${CMAKE_SYSTEM_PROCESSOR}")
 
 if(${PLATFORM} STREQUAL "osx")
-    # Set archs to be build for osx to both x86_64 and arm64
     set(CMAKE_OSX_ARCHITECTURES "x86_64;arm64")
 
     if(DEFINED CMAKE_OSX_ARCHITECTURES)
@@ -123,8 +125,17 @@ if(${PLATFORM} STREQUAL "osx")
     else()
         message(STATUS "CMAKE_OSX_ARCHITECTURES is not defined.")
     endif()
+
+elseif(${PLATFORM} STREQUAL "ios")
+    if(NOT DEFINED CMAKE_OSX_ARCHITECTURES)
+        set(CMAKE_OSX_ARCHITECTURES "arm64")
+    endif()
+    message(STATUS "iOS target architectures: ${CMAKE_OSX_ARCHITECTURES}")
+
+elseif(${PLATFORM} STREQUAL "android")
+    message(STATUS "Android ABI: ${ANDROID_ABI}")
+
 else()
-    # Detect if it's 32-bit or 64-bit for other systems based on the pointer size
     if(CMAKE_SIZEOF_VOID_P EQUAL 8)
         message(STATUS "Target is 64-bit")
     elseif(CMAKE_SIZEOF_VOID_P EQUAL 4)
@@ -141,6 +152,14 @@ if(${GA_USE_PACKAGE})
     find_package(CURL REQUIRED PATHS ${EXTERNALS_DIR}/curl)
     find_package(OpenSSL REQUIRED PATHS ${EXTERNALS_DIR}/openssl)
     set(LIBS CURL::libcurl)
+
+elseif(${PLATFORM} STREQUAL "ios" OR ${PLATFORM} STREQUAL "android")
+
+    add_definitions("-DUSE_OPENSSL -DCURL_STATICLIB -DCRYPTOPP_DISABLE_ASM")
+
+    # For iOS/Android cross-compilation, the consumer must provide curl and openssl
+    # at link time. We only need the headers at compile time (already included above).
+    set(LIBS "")
 
 else()
 
@@ -180,6 +199,24 @@ if(WIN32)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DGA_UWP_BUILD")
     endif()
 
+elseif(${PLATFORM} STREQUAL "ios")
+
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DGUID_CFUUID")
+
+    FILE(GLOB_RECURSE IOS_SOURCES "${GA_SOURCE_DIR}/gameanalytics/Platform/*.mm")
+    list(APPEND CPP_SOURCES ${IOS_SOURCES})
+    set(PUBLIC_LIBS
+        "-framework CoreFoundation"
+        "-framework Foundation"
+        "-framework UIKit"
+        "-framework SystemConfiguration"
+        "-framework Security"
+    )
+
+    set(CMAKE_OSX_DEPLOYMENT_TARGET "13.0" CACHE STRING "Minimum iOS deployment target")
+
+    create_source_groups(IOS_SOURCES)
+
 elseif(APPLE)
 
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DGUID_CFUUID")
@@ -195,6 +232,11 @@ elseif(APPLE)
     )
 
     create_source_groups(MACOS_SOURCES)
+
+elseif(${PLATFORM} STREQUAL "android")
+
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DGUID_STDLIB")
+    set(PUBLIC_LIBS log)
 
 elseif(LINUX)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DGUID_STDLIB -std=c++17")
@@ -212,44 +254,57 @@ endif()
 
 add_library(GameAnalytics ${LIB_TYPE} ${CPP_SOURCES})
 target_link_libraries(GameAnalytics PRIVATE ${LIBS} PUBLIC ${PUBLIC_LIBS})
+
+# Set properties for iOS static library
+if(${PLATFORM} STREQUAL "ios")
+    set_target_properties(GameAnalytics PROPERTIES
+        XCODE_ATTRIBUTE_IPHONEOS_DEPLOYMENT_TARGET "${CMAKE_OSX_DEPLOYMENT_TARGET}"
+    )
+endif()
+
 message(STATUS "CMAKE_CXX_FLAGS: ${CMAKE_CXX_FLAGS}")
 message(STATUS "CMAKE_EXE_LINKER_FLAGS: ${CMAKE_EXE_LINKER_FLAGS}")
 message(STATUS "CMAKE_SHARED_LINKER_FLAGS: ${CMAKE_SHARED_LINKER_FLAGS}")
-# --------------------------- Google Test Setup --------------------------- #
 
-# Set Project Name
-set(UT_PROJECT_NAME "${PROJECT_NAME}UnitTests")
+# --------------------------- Google Test Setup (desktop only) --------------------------- #
 
-# Add Google Test
-set(GTEST_DIR "${EXTERNALS_DIR}/googletest")
-add_subdirectory(${GTEST_DIR} ${PROJECT_SOURCE_DIR}/gtest_build)
+if(${GA_BUILD_TESTS})
 
-# Add tests
-enable_testing()
+    # Set Project Name
+    set(UT_PROJECT_NAME "${PROJECT_NAME}UnitTests")
 
-########################################
-# Test files
-########################################
+    # Add Google Test
+    set(GTEST_DIR "${EXTERNALS_DIR}/googletest")
+    add_subdirectory(${GTEST_DIR} ${PROJECT_SOURCE_DIR}/gtest_build)
 
-file(GLOB_RECURSE TEST_SRC_FILES "${PROJECT_SOURCE_DIR}/test/*.cpp")
+    # Add tests
+    enable_testing()
 
-########################################
-# Unit Tests
-#######################################
-add_executable(${UT_PROJECT_NAME} ${TEST_SRC_FILES})
+    ########################################
+    # Test files
+    ########################################
 
-########################################
-# Standard linking to gtest and gmock components
-########################################
-target_link_libraries(${UT_PROJECT_NAME} gtest gtest_main gmock_main)
+    file(GLOB_RECURSE TEST_SRC_FILES "${PROJECT_SOURCE_DIR}/test/*.cpp")
 
-########################################
-# Linking to GA SDK
-########################################
-target_link_libraries(${UT_PROJECT_NAME} ${PROJECT_NAME})
+    ########################################
+    # Unit Tests
+    #######################################
+    add_executable(${UT_PROJECT_NAME} ${TEST_SRC_FILES})
 
-########################################
-add_test(NAME ${UT_PROJECT_NAME} COMMAND GameAnalyticsUnitTests)
+    ########################################
+    # Standard linking to gtest and gmock components
+    ########################################
+    target_link_libraries(${UT_PROJECT_NAME} gtest gtest_main gmock_main)
+
+    ########################################
+    # Linking to GA SDK
+    ########################################
+    target_link_libraries(${UT_PROJECT_NAME} ${PROJECT_NAME})
+
+    ########################################
+    add_test(NAME ${UT_PROJECT_NAME} COMMAND GameAnalyticsUnitTests)
+
+endif()
 
 # --------------------------- Code Coverage Setup --------------------------- #
 

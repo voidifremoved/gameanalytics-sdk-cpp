@@ -20,6 +20,15 @@
         using GADevicePlatform = GAPlatformUwp;
     }
 
+#elif IS_ANDROID
+
+    #include "GAAndroid.h"
+
+    namespace gameanalytics
+    {
+        using GADevicePlatform = GAPlatformAndroid;
+    }
+
 #elif IS_LINUX
 
     #include "GALinux.h"
@@ -27,6 +36,15 @@
     namespace gameanalytics
     {
         using GADevicePlatform = GAPlatformLinux;
+    }
+
+#elif IS_IOS
+
+    #include "GAiOS.h"
+
+    namespace gameanalytics
+    {
+        using GADevicePlatform = GAPlatformiOS;
     }
 
 #elif IS_MAC
