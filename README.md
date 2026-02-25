@@ -7,42 +7,159 @@ Documentation can be found [here](https://gameanalytics.com/docs/cpp-sdk).
 
 Supported platforms:
 
-* Mac OSX
+* Mac OSX (x86_64 + arm64 universal binary)
+* iOS (arm64 device + arm64/x86_64 simulator, XCFramework)
+* Android (arm64-v8a, armeabi-v7a, x86_64)
 * Windows 32-bit and 64-bit
 * Linux
 
 Dependencies
 ------------
 
-* python 3.6  or higher
 * cmake  3.20 or higher
-* **Mac:**      XCode
-* **Windows:**  Visual Studio 2017 or later
-* **Linux:**    clang or gcc
+* **Mac/iOS:** XCode + command line tools
+* **Android:** Android NDK (r21+)
+* **Windows:** Visual Studio 2017 or later
+* **Linux:** clang or gcc
 
-Changelog
-------------
+Building Static Libraries
+-------------------------
 
-See the full [CHANGELOG](./CHANGELOG) for detailed version history.
+Build scripts are provided for each target platform. All scripts accept an
+optional configuration argument (`Release` or `Debug`, defaults to `Release`).
 
-How to build
-------------
+### Build all platforms at once
 
-Run `setup.py` with the required argument for your platform:
+```sh
+./build_all.sh [Release|Debug]
+```
+
+### macOS
+
+Builds a universal static library for both x86_64 and arm64.
+
+```sh
+./build_macos.sh [Release|Debug]
+```
+
+Output:
+```
+output/macos/
+  lib/libGameAnalytics.a
+  include/GameAnalytics/
+```
+
+### iOS
+
+Builds static libraries for device (arm64) and simulator (arm64 + x86_64),
+then packages them into an XCFramework.
+
+```sh
+./build_ios.sh [Release|Debug]
+```
+
+Set a custom deployment target (default 13.0):
+```sh
+IOS_DEPLOYMENT_TARGET=15.0 ./build_ios.sh Release
+```
+
+Output:
+```
+output/ios/
+  GameAnalytics.xcframework/      # ready to drop into Xcode
+  device/lib/libGameAnalytics.a   # device-only static lib
+  simulator/lib/libGameAnalytics.a
+  include/GameAnalytics/
+```
+
+### Android
+
+Builds static libraries for arm64-v8a, armeabi-v7a, and x86_64.
+Requires the Android NDK. Set one of these environment variables:
+
+```sh
+export ANDROID_NDK=$HOME/Library/Android/sdk/ndk/<version>
+# or
+export ANDROID_NDK_HOME=$HOME/Library/Android/sdk/ndk/<version>
+# or
+export ANDROID_HOME=$HOME/Library/Android/sdk  # uses latest installed NDK
+```
+
+Then build:
+```sh
+./build_android.sh [Release|Debug]
+```
+
+Set a custom minimum SDK version (default 24):
+```sh
+ANDROID_MIN_SDK=21 ./build_android.sh Release
+```
+
+Output:
+```
+output/android/
+  arm64-v8a/lib/libGameAnalytics.a
+  armeabi-v7a/lib/libGameAnalytics.a
+  x86_64/lib/libGameAnalytics.a
+  include/GameAnalytics/
+```
+
+### CMake directly
+
+You can also invoke CMake directly for more control:
+
+```sh
+# macOS
+cmake -B build/macos -DPLATFORM=osx -DCMAKE_BUILD_TYPE=Release -DGA_BUILD_SAMPLE=OFF -DGA_BUILD_TESTS=OFF
+cmake --build build/macos --config Release
+
+# iOS device
+cmake -B build/ios -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_ARCHITECTURES=arm64 -DPLATFORM=ios -DGA_BUILD_SAMPLE=OFF -DGA_BUILD_TESTS=OFF
+cmake --build build/ios --config Release
+
+# Android (requires NDK toolchain)
+cmake -B build/android \
+  -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK/build/cmake/android.toolchain.cmake \
+  -DANDROID_ABI=arm64-v8a \
+  -DANDROID_NATIVE_API_LEVEL=24 \
+  -DANDROID_STL=c++_static \
+  -DPLATFORM=android \
+  -DGA_BUILD_SAMPLE=OFF \
+  -DGA_BUILD_TESTS=OFF
+cmake --build build/android --config Release
+```
+
+Linking Against the Static Library
+-----------------------------------
+
+When linking the GameAnalytics static library into your game, you must also
+link the following dependencies:
+
+**All platforms:**
+* libcurl (static or dynamic)
+* OpenSSL (libssl, libcrypto)
+
+**macOS additionally:**
+* CoreFoundation, Foundation, CoreServices, SystemConfiguration, Metal, MetalKit
+
+**iOS additionally:**
+* CoreFoundation, Foundation, UIKit, SystemConfiguration, Security
+
+**Android additionally:**
+* log (Android logging)
+
+The prebuilt curl and OpenSSL binaries for macOS and Linux are included in the
+`externals/` directory. For iOS and Android you need to provide your own
+builds of curl and OpenSSL for the target platform.
+
+Legacy Build System
+-------------------
+
+The original `setup.py` script is still available for desktop platforms:
 
 ```sh
 python setup.py --platform {linux_x64,linux_x86,osx,win32,win64,uwp} [--cfg {Release,Debug}] [--build] [--test] [--coverage]
 ```
-
-The following arguments are supported:
-
-* `linux_x64`
-* `linux_x86`
-* `osx`
-* `win32`
-* `win64`
-
-The generated project can be found inside the `build` folder.
 
 Lib Dependencies
 ----------------

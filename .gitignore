@@ -35,4 +35,5 @@
 [Bb]uild/
 [Bb]uild_old/
 /gtest_build
+/output/
 .DS_Store
